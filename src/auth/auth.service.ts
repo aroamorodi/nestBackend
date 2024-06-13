@@ -8,6 +8,8 @@ import * as bcryptjs from 'bcryptjs';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './interfaces/jwt-payload';
+import { LoginResponse } from './interfaces/login-response';
+import { RegisterDto } from './dto/register.dto';
 
 @Injectable()
 export class AuthService {
@@ -45,8 +47,15 @@ export class AuthService {
     
   }
 
+  async register (registerDto: RegisterDto): Promise<LoginResponse> {
+    const user = await this.create(registerDto);
+    return {
+      user: user,
+      token: this.getJwtToken({id: user._id})
+    }
+  }
 
-  async login( loginDto: LoginDto) {
+  async login( loginDto: LoginDto): Promise<LoginResponse> {
     const {email, password} = loginDto;
 
     const user = await this.userModel.findOne({email});
@@ -61,7 +70,7 @@ export class AuthService {
 
     const { password:_ , ...rest} = user.toJSON();
     return {
-      ...rest,
+      user: rest,
       token: this.getJwtToken({id: user.id})
     }
     /**
@@ -70,8 +79,8 @@ export class AuthService {
      */
   }
 
-  findAll() {
-    return `This action returns all auth`;
+  findAll(): Promise<User[]> {
+    return this.userModel.find();
   }
 
   findOne(id: number) {
